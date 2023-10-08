@@ -77,3 +77,89 @@ class UserAPI(MethodView):
                 return jsonify({'message': 'User not found'}), 404
         except Exception as e:
             return jsonify({'message': 'Failed to retrieve user', 'error': str(e)}), 500
+
+    def put(self, user_id):
+        """
+               Update user information by user ID.
+
+               URL: /user/update/<user_id>
+               Method: PUT
+               Description: Update user information by user ID.
+               URL Parameters:
+                   - user_id (int): The ID of the user to update.
+               Request Body:
+                   - name (str): The updated user's name.
+                   - phoneNo (str): The updated user's phone number.
+                   - address (str): The updated user's address.
+                   - email (str): The updated user's email address.
+                   - idProof (str): The updated user's ID proof (base64-encoded).
+                   - drivingLicenceNo (str): The updated user's driving license number.
+               Returns:
+                   JSON: A message indicating the success or failure of the operation.
+        """
+        try:
+            # Retrieve user data from the request JSON
+            data = request.get_json()
+            updated_name = data.get('name')
+            updated_phone_no = data.get('phoneNo')
+            updated_address = data.get('address')
+            updated_email = data.get('email')
+            updated_id_proof = data.get('idProof')
+            updated_driving_licence_no = data.get('drivingLicenceNo')
+
+            # Check if the user with the specified user_id exists
+            select_query = f"SELECT * FROM User WHERE Id = {user_id}"
+            existing_user = execute_select_query(select_query)
+
+            if not existing_user:
+                return jsonify({'message': 'User not found'}), 404
+
+            # Define the UPDATE query to update the user data
+            update_query = """
+                UPDATE User
+                SET name = %s, phoneNo = %s, address = %s, email = %s,
+                    idProof = %s, drivingLicenceNo = %s
+                WHERE Id = %s
+            """
+
+            # Execute the UPDATE query with the updated user data and user_id
+            execute_update_query(update_query, (
+                updated_name, updated_phone_no, updated_address, updated_email,
+                updated_id_proof, updated_driving_licence_no, user_id
+            ))
+
+            return jsonify({'message': 'User updated successfully'}), 200
+
+        except Exception as e:
+            return jsonify({'message': 'Failed to update user', 'error': str(e)}), 500
+
+    def delete(self, user_id):
+        """
+                Delete a user by user ID.
+
+                URL: /user/delete/<user_id>
+                Method: DELETE
+                Description: Delete a user by user ID.
+                URL Parameters:
+                    - user_id (int): The ID of the user to delete.
+                Returns:
+                    JSON: A message indicating the success or failure of the operation.
+        """
+        try:
+            # Check if the user with the specified user_id exists
+            select_query = f"SELECT * FROM User WHERE Id = {user_id}"
+            existing_user = execute_select_query(select_query)
+
+            if not existing_user:
+                return jsonify({'message': 'User not found'}), 404
+
+            # Define the DELETE query to delete the user by user_id
+            delete_query = "DELETE FROM User WHERE Id = %s"
+
+            # Execute the DELETE query with the user_id
+            execute_delete_query(delete_query, (user_id,))
+
+            return jsonify({'message': 'User deleted successfully'}), 200
+
+        except Exception as e:
+            return jsonify({'message': 'Failed to delete user', 'error': str(e)}), 500
